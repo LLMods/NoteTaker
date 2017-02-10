@@ -80,7 +80,7 @@ public class DBInterface {
         switch (databaseEngine) {
             case SQLITE:
                 query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                        "id INT PRIMARY KEY NOT NULL AUTOINCREMENT," +
+                        "id INT PRIMARY KEY NOT NULL," +
                         "username VARCHAR(50) NOT NULL," +
                         "note TEXT NOT NULL)";
             case MYSQL:

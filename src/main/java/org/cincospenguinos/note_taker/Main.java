@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,8 +23,19 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         super.onEnable();
 
+        // First setup the configuration file and ensure that that's working
         if(!setupConfiguration()){
             getLogger().log(Level.SEVERE, "Please modify config.yml properly to use this plugin.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        // Then check and make sure the database works properly
+        Connection c = DBInterface.getConnection(config, this);
+
+        if(c == null){
+            getLogger().log(Level.SEVERE, "There was an issue connecting to the database. Please make sure" +
+                    "that connection is possible and try to reload.");
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
@@ -70,9 +82,8 @@ public class Main extends JavaPlugin {
     }
 
     private boolean verifyConfig(FileConfiguration config) {
-        return config.getString("username") != null && !config.getString("username").isEmpty()
-                && config.getString("password") != null && !config.getString("password").isEmpty()
-                && config.getString("host") != null && !config.getString("host").isEmpty()
-                && config.getString("schema") != null && !config.getString("schema").isEmpty();
+        return config.getString("username") != null && config.getString("password") != null
+                && config.getString("host") != null && config.getString("schema") != null
+                && config.getString("engine") != null;
     }
 }

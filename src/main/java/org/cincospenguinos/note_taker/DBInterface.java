@@ -4,12 +4,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 /**
  * Interface for the database.
  */
 public class DBInterface {
+
+    private static final String TABLE_NAME = "NoteTakerNotes";
 
     private static Connection connection;
     private static DatabaseEngine databaseEngine;
@@ -76,14 +79,19 @@ public class DBInterface {
 
         switch (databaseEngine) {
             case SQLITE:
-            case MYSQL:
-                query = "CREATE TABLE IF NOT EXISTS NoteTakerNotes (" +
-                        "id INT PRIMARY KEY NOT NULL," +
+                query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                        "id INT PRIMARY KEY NOT NULL AUTOINCREMENT," +
                         "username VARCHAR(50) NOT NULL," +
                         "note TEXT NOT NULL)";
+            case MYSQL:
+                query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                        "id INT NOT NULL AUTO_INCREMENT," +
+                        "username VARCHAR(50) NOT NULL," +
+                        "note TEXT NOT NULL," +
+                        "PRIMARY KEY(id))";
                 break;
             case POSTGRES:
-                query = "CREATE TABLE IF NOT EXISTS NoteTakerNotes (" +
+                query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                         "id SERIAL PRIMARY KEY," +
                         "username VARCHAR(50) NOT NULL," +
                         "note TEXT NOT NULL)";
@@ -100,6 +108,58 @@ public class DBInterface {
 
         return true;
     }
+
+    /**
+     * Creates note for user provided with text provided
+     * @param username - User adding the note
+     * @param note - Note to add
+     * @return true if it worked or false if something happened
+     */
+    public static boolean createNote(String username, String note) {
+        String sql = "INSERT INTO " + TABLE_NAME + "VALUES('?', '?')";
+        try {
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, note);
+
+            stmt.execute();
+
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "An error occurred when attempting to create a note!");
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    public static String readNote (int id) {
+        return null; // TODO: This
+    }
+
+    public static boolean deleteNote(int id){
+        return false; // TODO: This
+    }
+
+    public static ArrayList<String> listNotes(String username){
+        String sql = "SELECT * FROM " + TABLE_NAME + "WHERE username = '?'";
+        try {
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setString(1, username);
+            ResultSet r = stmt.executeQuery();
+
+            // TODO: Finish this
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null; // TODO: This
+    }
+
+    /*
+     * HELPERS
+     */
+
 
     private static DatabaseEngine getDatabaseType(FileConfiguration configuration){
         String type = configuration.getString("engine");

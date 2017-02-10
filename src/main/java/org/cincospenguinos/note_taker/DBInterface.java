@@ -105,6 +105,7 @@ public class DBInterface {
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "An error occurred when attempting to create table!");
             e.printStackTrace();
+            return false;
         }
 
         return true;

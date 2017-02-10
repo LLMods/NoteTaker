@@ -83,6 +83,7 @@ public class DBInterface {
                         "id INT PRIMARY KEY NOT NULL," +
                         "username VARCHAR(50) NOT NULL," +
                         "note TEXT NOT NULL)";
+                break;
             case MYSQL:
                 query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                         "id INT NOT NULL AUTO_INCREMENT," +

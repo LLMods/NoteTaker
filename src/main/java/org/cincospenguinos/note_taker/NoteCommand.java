@@ -5,8 +5,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.logging.Logger;
-
 /**
  * NoteCommand - manages notes for each player
  */
@@ -33,6 +31,7 @@ public class NoteCommand implements CommandExecutor {
                 case READ:
                     return read(strings);
             }
+
         } else
             commandSender.sendMessage("This command is only permitted for players, not server admins.");
 

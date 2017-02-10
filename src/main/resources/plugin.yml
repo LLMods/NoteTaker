@@ -1,0 +1,9 @@
+---
+ name: NoteTaker
+ version: 0.0.1
+ author: cincospenguinos
+ main: org.cincospenguinos.note_taker.Main
+ commands:
+   note:
+     description: Save a quick note
+     usage: /note <delete [id]|list|create [note to save]|read [id]>

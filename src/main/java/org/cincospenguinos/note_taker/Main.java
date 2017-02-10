@@ -1,16 +1,12 @@
 package org.cincospenguinos.note_taker;
 
-import com.avaje.ebean.LogLevel;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Main class for the plugin.
@@ -34,8 +30,15 @@ public class Main extends JavaPlugin {
         Connection c = DBInterface.getConnection(config, this);
 
         if(c == null){
-            getLogger().log(Level.SEVERE, "There was an issue connecting to the database. Please make sure" +
+            getLogger().log(Level.SEVERE, "There was an issue connecting to the database. Please make sure " +
                     "that connection is possible and try to reload.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        if (!DBInterface.setupTable()) {
+            getLogger().log(Level.SEVERE, "The database table could not be setup! Please attempt to fix and " +
+                    "then reload.");
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }

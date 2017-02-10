@@ -25,11 +25,11 @@ public class NoteCommand implements CommandExecutor {
                 case CREATE:
                     return create(strings);
                 case LIST:
-                    return list();
+                    return list((Player) commandSender);
                 case DELETE:
                     return delete(strings);
                 case READ:
-                    return read(strings);
+                    return read(strings, (Player) commandSender);
             }
 
         } else
@@ -63,11 +63,17 @@ public class NoteCommand implements CommandExecutor {
     }
 
     private boolean create(String[] command){
-        // TODO: this
+        StringBuilder builder = new StringBuilder();
+
+        for(int i = 1; i < command.length; i++)
+            builder.append(command[i]);
+
+        // TODO: This
+
         return true;
     }
 
-    private boolean list(){
+    private boolean list(Player sender){
         // TODO: This
         return true;
     }
@@ -77,7 +83,7 @@ public class NoteCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean read(String[] command){
+    private boolean read(String[] command, Player sender){
         // TODO: This
         return true;
     }

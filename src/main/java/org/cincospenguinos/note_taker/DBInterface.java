@@ -6,16 +6,16 @@ import org.bukkit.plugin.Plugin;
 import java.sql.*;
 import java.util.logging.Level;
 
-import static org.bukkit.Bukkit.getLogger;
-
 /**
  * Interface for the database.
  */
 public class DBInterface {
 
     private static Connection connection;
+    private static DatabaseEngine databaseEngine;
+    private static Plugin plugin;
 
-    private enum DatabaseType {
+    private enum DatabaseEngine {
         MYSQL, SQLITE, POSTGRES, INVALID
     }
 
@@ -27,7 +27,7 @@ public class DBInterface {
      */
     public static Connection getConnection(FileConfiguration configuration, Plugin currentPlugin){
         if (connection == null) {
-            DatabaseType type = getDatabaseType(configuration);
+            DatabaseEngine type = getDatabaseType(configuration);
 
             String username = configuration.getString("username");
             String password = configuration.getString("password");
@@ -45,34 +45,72 @@ public class DBInterface {
                     url += ":" + currentPlugin.getDataFolder().toString() + "/note_taker.db";
                     break;
                 case INVALID:
-                    getLogger().log(Level.SEVERE, "Invalid database option (did you specify a database engine?)");
+                    currentPlugin.getLogger().log(Level.SEVERE, "Invalid database option (did you specify a database engine?)");
                     return null;
             }
-
-            getLogger().info("URL: " + url);
 
             try {
                 connection = DriverManager.getConnection(url, username, password);
             } catch (SQLException e) {
-                getLogger().log(Level.SEVERE, "Cannot connect to database!");
+                currentPlugin.getLogger().log(Level.SEVERE, "Cannot connect to database!");
                 e.printStackTrace();
                 return null;
             }
-        }
 
+            databaseEngine = type;
+            plugin = currentPlugin;
+        }
         return connection;
     }
 
-    private static DatabaseType getDatabaseType(FileConfiguration configuration){
+    /**
+     * Sets up the table according to the type.
+     *
+     * @return true if the table was setup
+     */
+    public static boolean setupTable(){
+        if(connection == null)
+            return false;
+
+        String query = "";
+
+        switch (databaseEngine) {
+            case SQLITE:
+            case MYSQL:
+                query = "CREATE TABLE IF NOT EXISTS NoteTakerNotes (" +
+                        "id INT PRIMARY KEY NOT NULL," +
+                        "username VARCHAR(50) NOT NULL," +
+                        "note TEXT NOT NULL)";
+                break;
+            case POSTGRES:
+                query = "CREATE TABLE IF NOT EXISTS NoteTakerNotes (" +
+                        "id SERIAL PRIMARY KEY," +
+                        "username VARCHAR(50) NOT NULL," +
+                        "note TEXT NOT NULL)";
+                break;
+        }
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "An error occurred when attempting to create table!");
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    private static DatabaseEngine getDatabaseType(FileConfiguration configuration){
         String type = configuration.getString("engine");
 
         if(type.equalsIgnoreCase("mysql"))
-            return DatabaseType.MYSQL;
+            return DatabaseEngine.MYSQL;
         else if(type.equalsIgnoreCase("postgres") || type.equalsIgnoreCase("postgresql"))
-            return DatabaseType.POSTGRES;
+            return DatabaseEngine.POSTGRES;
         else if(type.equalsIgnoreCase("sqlite"))
-            return DatabaseType.SQLITE;
+            return DatabaseEngine.SQLITE;
 
-        return DatabaseType.INVALID;
+        return DatabaseEngine.INVALID;
     }
 }

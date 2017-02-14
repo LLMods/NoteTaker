@@ -3,6 +3,7 @@ package org.cincospenguinos.note_taker;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
+import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -17,8 +18,6 @@ public class DBInterface {
 
     private static Connection connection;
     private static DatabaseEngine databaseEngine;
-    private static Plugin plugin;
-    private static String schemaName;
 
     private enum DatabaseEngine {
         MYSQL, SQLITE, POSTGRES, INVALID
@@ -30,7 +29,7 @@ public class DBInterface {
      * @param configuration - File config to pass
      * @return Connection or null
      */
-    public static Connection getConnection(FileConfiguration configuration, Plugin currentPlugin){
+    public static Connection getConnection(FileConfiguration configuration, File dataFolder){
         if (connection == null) {
             DatabaseEngine type = getDatabaseType(configuration);
 
@@ -47,24 +46,22 @@ public class DBInterface {
                     url += "://" + host + "/" + schema;
                     break;
                 case SQLITE:
-                    url += ":" + currentPlugin.getDataFolder().toString() + "/note_taker.db";
+                    url += ":" + dataFolder.toString() + "/note_taker.db";
                     break;
                 case INVALID:
-                    currentPlugin.getLogger().log(Level.SEVERE, "Invalid database option (did you specify a database engine?)");
+                    Main.log(Level.SEVERE, "Invalid database option (did you specify a database engine?)");
                     return null;
             }
 
             try {
                 connection = DriverManager.getConnection(url, username, password);
             } catch (SQLException e) {
-                currentPlugin.getLogger().log(Level.SEVERE, "Cannot connect to database!");
+                Main.log(Level.SEVERE, "Cannot connect to database!");
                 e.printStackTrace();
                 return null;
             }
 
             databaseEngine = type;
-            plugin = currentPlugin;
-            schemaName = schema;
         }
         return connection;
     }
@@ -106,7 +103,7 @@ public class DBInterface {
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "An error occurred when attempting to create table!");
+            Main.log(Level.SEVERE, "An error occurred when attempting to create table!");
             e.printStackTrace();
             return false;
         }
@@ -121,6 +118,9 @@ public class DBInterface {
      * @return true if it worked or false if something happened
      */
     public static boolean createNote(String username, String note) {
+        if(connection == null)
+            return false;
+
         String sql = "";
 
         switch(databaseEngine){
@@ -141,7 +141,7 @@ public class DBInterface {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "An error occurred when attempting to create a note!");
+            Main.log(Level.SEVERE, "An error occurred when attempting to create a note!");
             e.printStackTrace();
             return false;
         }
@@ -149,27 +149,56 @@ public class DBInterface {
         return true;
     }
 
+    /**
+     * Returns the full note matching the id provided and the username provided,
+     * or null if none exists.
+     *
+     * @param id - ID of the note to look for
+     * @param username - User requesting the note
+     * @return Note String or null
+     */
     public static String readNote (int id, String username) {
-        String sql = "SELECT 1 FROM " + TABLE_NAME + " WHERE id = ? AND username = ?";
+        if(connection == null)
+            return null;
+
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE id = ? AND username = ? LIMIT 1";
+        String note = null;
+
 
         try {
             PreparedStatement stmt = connection.prepareStatement(sql);
             stmt.setInt(1, id);
             stmt.setString(2, username);
+
+            ResultSet results = stmt.executeQuery();
+
+            while(results.next())
+                note = results.getString("note");
+
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "A SQL error occurred when attempting to read a note!");
+            Main.log(Level.SEVERE, "A SQL error occurred when attempting to read a note!");
             e.printStackTrace();
         }
 
 
-        return null; // TODO: This
+        return note;
     }
 
     public static boolean deleteNote(int id, String username){
         return false; // TODO: This
     }
 
+    /**
+     * Returns a map of notes given the proper username. Returns null if an error
+     * occurred.
+     *
+     * @param username - User who requested a notes list
+     * @return The list of notes
+     */
     public static TreeMap<Integer, String> listNotes(String username){
+        if(connection == null)
+            return null;
+
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE username = ?";
 
         TreeMap<Integer, String> notes = new TreeMap<Integer, String>();
@@ -184,7 +213,7 @@ public class DBInterface {
 
 
         } catch (SQLException e){
-            plugin.getLogger().log(Level.SEVERE, "An SQL exception occurred when attempting to get the notes list!");
+            Main.log(Level.SEVERE, "An SQL exception occurred when attempting to get the notes list!");
             e.printStackTrace();
             return null;
         }
@@ -202,7 +231,7 @@ public class DBInterface {
 
             connection = null; // TODO: Is this ok?
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "An exception was thrown when attempting to disconnect from the DB!");
+            Main.log(Level.SEVERE, "An exception was thrown when attempting to disconnect from the DB!");
             e.printStackTrace();
         }
     }
@@ -210,8 +239,6 @@ public class DBInterface {
     /*
      * HELPERS
      */
-
-
     private static DatabaseEngine getDatabaseType(FileConfiguration configuration){
         String type = configuration.getString("engine");
 

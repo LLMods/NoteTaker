@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.sql.Connection;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main class for the plugin.
@@ -14,6 +15,7 @@ import java.util.logging.Level;
 public class Main extends JavaPlugin {
 
     private FileConfiguration config;
+    private static Logger logger;
 
     @Override
     public void onEnable() {
@@ -27,7 +29,7 @@ public class Main extends JavaPlugin {
         }
 
         // Then check and make sure the database works properly
-        Connection c = DBInterface.getConnection(config, this);
+        Connection c = DBInterface.getConnection(config, getDataFolder());
 
         if(c == null){
             getLogger().log(Level.SEVERE, "There was an issue connecting to the database. Please make sure " +
@@ -45,6 +47,8 @@ public class Main extends JavaPlugin {
 
         getLogger().info("Database connected!");
         this.getCommand("note").setExecutor(new NoteCommand());
+
+        logger = getLogger();
     }
 
     @Override
@@ -52,6 +56,16 @@ public class Main extends JavaPlugin {
         DBInterface.disconnect();
 
         super.onDisable();
+    }
+
+    /**
+     * Static method to log directly to the log file.
+     *
+     * @param lvl - Log level
+     * @param message - to put in the log file
+     */
+    public static void log(Level lvl, String message){
+        logger.log(lvl, message);
     }
 
     /**

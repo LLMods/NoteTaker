@@ -1,9 +1,13 @@
 package org.cincospenguinos.note_taker;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * NoteCommand - manages notes for each player
@@ -23,7 +27,7 @@ public class NoteCommand implements CommandExecutor {
 
             switch(t){
                 case CREATE:
-                    return create(strings);
+                    return create((Player) commandSender, strings);
                 case LIST:
                     return list((Player) commandSender);
                 case DELETE:
@@ -33,7 +37,7 @@ public class NoteCommand implements CommandExecutor {
             }
 
         } else
-            commandSender.sendMessage("This command is only permitted for players, not server admins.");
+            commandSender.sendMessage("This command is only permitted for players, not server admins." + ChatColor.RED);
 
         return true;
     }
@@ -62,19 +66,46 @@ public class NoteCommand implements CommandExecutor {
         return NoteCommandType.INVALID;
     }
 
-    private boolean create(String[] command){
+    /**
+     * Creates a note for the player provided.
+     *
+     * @param sender - User who wants to create the note
+     * @param command - The command that was provided
+     * @return true, always
+     */
+    private boolean create(Player sender, String[] command){
         StringBuilder builder = new StringBuilder();
 
         for(int i = 1; i < command.length; i++)
             builder.append(command[i]);
 
-        // TODO: This
+        if(!DBInterface.createNote(sender.getDisplayName(), builder.toString()))
+            sender.sendMessage("An error occurred with the database. Please inform your system administrator." + ChatColor.RED);
 
         return true;
     }
 
+    /**
+     * Prints out a list of notes to the Player.
+     *
+     * @param sender - User who wants to see his/her notes
+     * @return true, always
+     */
     private boolean list(Player sender){
-        // TODO: This
+        TreeMap<Integer, String> notes = DBInterface.listNotes(sender.getDisplayName());
+
+        if(notes == null){
+            sender.sendMessage("An error occured with the database. Please inform your system administrator." + ChatColor.RED);
+            return true;
+        }
+
+        if(notes.size() == 0)
+            sender.sendMessage("There are no notes to show!" + ChatColor.RED);
+
+        for(Map.Entry<Integer, String> e : notes.entrySet()){
+            sender.sendMessage(e.getKey() + " - " + e.getValue().substring(0, Math.min(e.getValue().length(), 15)));
+        }
+
         return true;
     }
 

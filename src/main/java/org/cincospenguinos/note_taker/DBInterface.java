@@ -5,6 +5,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.TreeMap;
 import java.util.logging.Level;
 
 /**
@@ -17,6 +18,7 @@ public class DBInterface {
     private static Connection connection;
     private static DatabaseEngine databaseEngine;
     private static Plugin plugin;
+    private static String schemaName;
 
     private enum DatabaseEngine {
         MYSQL, SQLITE, POSTGRES, INVALID
@@ -62,6 +64,7 @@ public class DBInterface {
 
             databaseEngine = type;
             plugin = currentPlugin;
+            schemaName = schema;
         }
         return connection;
     }
@@ -80,7 +83,7 @@ public class DBInterface {
         switch (databaseEngine) {
             case SQLITE:
                 query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                        "id INT PRIMARY KEY NOT NULL," +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                         "username VARCHAR(50) NOT NULL," +
                         "note TEXT NOT NULL)";
                 break;
@@ -118,13 +121,24 @@ public class DBInterface {
      * @return true if it worked or false if something happened
      */
     public static boolean createNote(String username, String note) {
-        String sql = "INSERT INTO " + TABLE_NAME + "VALUES('?', '?')";
+        String sql = "";
+
+        switch(databaseEngine){
+            case SQLITE:
+                sql = "INSERT INTO " + TABLE_NAME + "(username, note) VALUES (?, ?)";
+                break;
+            case MYSQL:
+                sql = "INSERT INTO " + TABLE_NAME + " VALUES (?, ?)";
+                break;
+            case POSTGRES:
+                break;
+        }
+
         try {
             PreparedStatement stmt = connection.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, note);
-
-            stmt.execute();
+            stmt.executeUpdate();
 
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "An error occurred when attempting to create a note!");
@@ -143,19 +157,42 @@ public class DBInterface {
         return false; // TODO: This
     }
 
-    public static ArrayList<String> listNotes(String username){
-        String sql = "SELECT * FROM " + TABLE_NAME + "WHERE username = '?'";
+    public static TreeMap<Integer, String> listNotes(String username){
+        String sql = "SELECT * FROM " + TABLE_NAME /*+ " WHERE username = \"?\""*/;
+
+        TreeMap<Integer, String> notes = new TreeMap<Integer, String>();
+
         try {
             PreparedStatement stmt = connection.prepareStatement(sql);
-            stmt.setString(1, username);
-            ResultSet r = stmt.executeQuery();
+            ResultSet set = stmt.executeQuery();
 
-            // TODO: Finish this
-        } catch (SQLException e) {
+            while(set.next()){
+//                plugin.getLogger().info(set.getString("username"));
+                notes.put(set.getInt("id"), set.getString("note"));
+            }
+
+        } catch (SQLException e){
+            plugin.getLogger().log(Level.SEVERE, "An SQL exception occurred when attempting to get the notes list!");
             e.printStackTrace();
+            return null;
         }
 
-        return null; // TODO: This
+        return notes;
+    }
+
+    /**
+     * Disconnect from the database
+     */
+    public static void disconnect() {
+        try {
+            if(connection != null && !connection.isClosed())
+                connection.close();
+
+            connection = null; // TODO: Is this ok?
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "An exception was thrown when attempting to disconnect from the DB!");
+            e.printStackTrace();
+        }
     }
 
     /*

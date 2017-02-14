@@ -43,12 +43,13 @@ public class Main extends JavaPlugin {
             return;
         }
 
-
+        getLogger().info("Database connected!");
         this.getCommand("note").setExecutor(new NoteCommand());
     }
 
     @Override
     public void onDisable(){
+        DBInterface.disconnect();
 
         super.onDisable();
     }

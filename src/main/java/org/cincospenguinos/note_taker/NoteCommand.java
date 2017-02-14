@@ -33,11 +33,11 @@ public class NoteCommand implements CommandExecutor {
                 case DELETE:
                     return delete((Player) commandSender, strings);
                 case READ:
-                    return read(strings, (Player) commandSender);
+                    return read((Player) commandSender, strings);
             }
 
         } else
-            commandSender.sendMessage("This command is only permitted for players, not server admins." + ChatColor.RED);
+            commandSender.sendMessage(ChatColor.RED + "This command is only permitted for players, not server admins.");
 
         return true;
     }
@@ -84,7 +84,7 @@ public class NoteCommand implements CommandExecutor {
         if(!DBInterface.createNote(sender.getDisplayName(), builder.toString().trim()))
             sender.sendMessage(ChatColor.RED + "An error occurred with the database. Please inform your system administrator.");
         else
-            sender.sendMessage("Note created" + ChatColor.GREEN + "" + ChatColor.ITALIC);
+            sender.sendMessage(ChatColor.GREEN + "" + ChatColor.ITALIC + "Note created");
 
         return true;
     }
@@ -104,19 +104,26 @@ public class NoteCommand implements CommandExecutor {
         }
 
         if(notes.size() == 0) {
-            sender.sendMessage("There are no notes to show!" + ChatColor.RED);
+            sender.sendMessage(ChatColor.RED + "There are no notes to show!");
             return true;
         }
 
-        sender.sendMessage(ChatColor.GREEN + "ID - FIRST FEW WORDS");
+//        sender.sendMessage(ChatColor.GREEN + "ID - FIRST FEW WORDS");
         for(Map.Entry<Integer, String> e : notes.entrySet()){
-            sender.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "" + e.getKey() + " - " +
-                    e.getValue().substring(0, Math.min(e.getValue().length(), 20)));
+            sender.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "" + e.getKey() + "" + ChatColor.RESET
+                    + " - " + e.getValue().substring(0, Math.min(e.getValue().length(), 20)));
         }
 
         return true;
     }
 
+    /**
+     * Deletes the note the sender requests, if it exists.
+     *
+     * @param sender of the command
+     * @param command - the command info
+     * @return true, always
+     */
     private boolean delete(Player sender, String[] command){
         int id = Integer.parseInt(command[1]);
 
@@ -128,7 +135,14 @@ public class NoteCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean read(String[] command, Player sender){
+    /**
+     * Gives the note text to the user who requests it, if it exists.
+     *
+     * @param command that was sent
+     * @param sender of the command
+     * @return true, always
+     */
+    private boolean read(Player sender, String[] command){
         int id = Integer.parseInt(command[1]);
         String note = DBInterface.readNote(id, sender.getDisplayName());
 

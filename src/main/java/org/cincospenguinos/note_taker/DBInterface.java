@@ -184,8 +184,31 @@ public class DBInterface {
         return note;
     }
 
-    public static boolean deleteNote(int id, String username){
-        return false; // TODO: This
+    /**
+     * Deletes the note matching the ID from the user provided.
+     *
+     * @param id - ID of note
+     * @param username - User who wishes to delete that note
+     * @return true if the note was deleted
+     */
+    public static boolean deleteNote(int id, String username) {
+        if(connection == null)
+            return false;
+
+        String sql = "DELETE FROM " + TABLE_NAME + " WHERE id = ? AND username = ?";
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setInt(1, id);
+            stmt.setString(2, username);
+
+            return stmt.executeUpdate() >= 1;
+        } catch (SQLException e) {
+            Main.log(Level.SEVERE, "An error occurred when attempting to delete a note!");
+            e.printStackTrace();
+            return false;
+        }
+
     }
 
     /**

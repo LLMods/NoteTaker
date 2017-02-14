@@ -31,7 +31,7 @@ public class NoteCommand implements CommandExecutor {
                 case LIST:
                     return list((Player) commandSender);
                 case DELETE:
-                    return delete(strings);
+                    return delete((Player) commandSender, strings);
                 case READ:
                     return read(strings, (Player) commandSender);
             }
@@ -76,11 +76,15 @@ public class NoteCommand implements CommandExecutor {
     private boolean create(Player sender, String[] command){
         StringBuilder builder = new StringBuilder();
 
-        for(int i = 1; i < command.length; i++)
+        for(int i = 1; i < command.length; i++) {
             builder.append(command[i]);
+            builder.append(" ");
+        }
 
-        if(!DBInterface.createNote(sender.getDisplayName(), builder.toString()))
-            sender.sendMessage("An error occurred with the database. Please inform your system administrator." + ChatColor.RED);
+        if(!DBInterface.createNote(sender.getDisplayName(), builder.toString().trim()))
+            sender.sendMessage(ChatColor.RED + "An error occurred with the database. Please inform your system administrator.");
+        else
+            sender.sendMessage("Note created" + ChatColor.GREEN + "" + ChatColor.ITALIC);
 
         return true;
     }
@@ -95,27 +99,44 @@ public class NoteCommand implements CommandExecutor {
         TreeMap<Integer, String> notes = DBInterface.listNotes(sender.getDisplayName());
 
         if(notes == null){
-            sender.sendMessage("An error occured with the database. Please inform your system administrator." + ChatColor.RED);
+            sender.sendMessage(ChatColor.RED + "An error occured with the database. Please inform your system administrator.");
             return true;
         }
 
-        if(notes.size() == 0)
+        if(notes.size() == 0) {
             sender.sendMessage("There are no notes to show!" + ChatColor.RED);
+            return true;
+        }
 
+        sender.sendMessage(ChatColor.GREEN + "ID - FIRST FEW WORDS");
         for(Map.Entry<Integer, String> e : notes.entrySet()){
-            sender.sendMessage(e.getKey() + " - " + e.getValue().substring(0, Math.min(e.getValue().length(), 15)));
+            sender.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "" + e.getKey() + " - " +
+                    e.getValue().substring(0, Math.min(e.getValue().length(), 20)));
         }
 
         return true;
     }
 
-    private boolean delete(String[] command){
-        // TODO: This
+    private boolean delete(Player sender, String[] command){
+        int id = Integer.parseInt(command[1]);
+
+        if(DBInterface.deleteNote(id, sender.getDisplayName()))
+            sender.sendMessage(ChatColor.ITALIC + "" + ChatColor.GREEN + "Note deleted");
+        else
+            sender.sendMessage(ChatColor.RED + "There is no note that you own with that ID!");
+
         return true;
     }
 
     private boolean read(String[] command, Player sender){
-        // TODO: This
+        int id = Integer.parseInt(command[1]);
+        String note = DBInterface.readNote(id, sender.getDisplayName());
+
+        if(note != null)
+            sender.sendMessage(note);
+        else
+            sender.sendMessage(ChatColor.RED + "There is no note that you own with that ID!");
+
         return true;
     }
 

@@ -149,27 +149,39 @@ public class DBInterface {
         return true;
     }
 
-    public static String readNote (int id) {
+    public static String readNote (int id, String username) {
+        String sql = "SELECT 1 FROM " + TABLE_NAME + " WHERE id = ? AND username = ?";
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setInt(1, id);
+            stmt.setString(2, username);
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "A SQL error occurred when attempting to read a note!");
+            e.printStackTrace();
+        }
+
+
         return null; // TODO: This
     }
 
-    public static boolean deleteNote(int id){
+    public static boolean deleteNote(int id, String username){
         return false; // TODO: This
     }
 
     public static TreeMap<Integer, String> listNotes(String username){
-        String sql = "SELECT * FROM " + TABLE_NAME /*+ " WHERE username = \"?\""*/;
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE username = ?";
 
         TreeMap<Integer, String> notes = new TreeMap<Integer, String>();
 
         try {
             PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setString(1, username);
             ResultSet set = stmt.executeQuery();
 
-            while(set.next()){
-//                plugin.getLogger().info(set.getString("username"));
+            while(set.next())
                 notes.put(set.getInt("id"), set.getString("note"));
-            }
+
 
         } catch (SQLException e){
             plugin.getLogger().log(Level.SEVERE, "An SQL exception occurred when attempting to get the notes list!");

@@ -1,11 +1,9 @@
 package org.cincospenguinos.note_taker;
 
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.logging.Level;
 
@@ -14,11 +12,18 @@ import java.util.logging.Level;
  */
 public class DBInterface {
 
+    // Name of the DB table
     private static final String TABLE_NAME = "NoteTakerNotes";
 
+    // Connection to the DB
     private static Connection connection;
+
+    // What type of DB engine we are using
     private static DatabaseEngine databaseEngine;
 
+    /**
+     * Helps to figure out what DB engine the user wants to use
+     */
     private enum DatabaseEngine {
         MYSQL, SQLITE, POSTGRES, INVALID
     }
@@ -113,6 +118,7 @@ public class DBInterface {
 
     /**
      * Creates note for user provided with text provided
+     *
      * @param username - User adding the note
      * @param note - Note to add
      * @return true if it worked or false if something happened
@@ -261,6 +267,13 @@ public class DBInterface {
 
     /*
      * HELPERS
+     */
+
+    /**
+     * Extracts the database engine from the config file provided
+     *
+     * @param configuration - FileConfiguration of the plugin
+     * @return Which DatabaseEngine to use, or INVALID if the one provided is not supported
      */
     private static DatabaseEngine getDatabaseType(FileConfiguration configuration){
         String type = configuration.getString("engine");

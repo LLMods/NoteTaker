@@ -99,6 +99,12 @@ public class Main extends JavaPlugin {
         return verifyConfig(config);
     }
 
+    /**
+     * Helper method. Returns true if the config file is properly configured.
+     *
+     * @param config - FileConfiguration to check
+     * @return true if the config file is managed properly
+     */
     private boolean verifyConfig(FileConfiguration config) {
         return config.getString("username") != null && config.getString("password") != null
                 && config.getString("host") != null && config.getString("schema") != null

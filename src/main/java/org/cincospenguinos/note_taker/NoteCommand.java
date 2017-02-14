@@ -14,6 +14,9 @@ import java.util.TreeMap;
  */
 public class NoteCommand implements CommandExecutor {
 
+    /**
+     * Helps figure out what command is requested
+     */
     private enum NoteCommandType {
         LIST, DELETE, CREATE, READ, INVALID
     }
@@ -108,7 +111,6 @@ public class NoteCommand implements CommandExecutor {
             return true;
         }
 
-//        sender.sendMessage(ChatColor.GREEN + "ID - FIRST FEW WORDS");
         for(Map.Entry<Integer, String> e : notes.entrySet()){
             sender.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "" + e.getKey() + "" + ChatColor.RESET
                     + " - " + e.getValue().substring(0, Math.min(e.getValue().length(), 20)));

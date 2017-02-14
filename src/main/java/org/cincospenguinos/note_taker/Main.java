@@ -14,22 +14,16 @@ import java.util.logging.Logger;
  */
 public class Main extends JavaPlugin {
 
-    private FileConfiguration config;
     private static Logger logger;
 
     @Override
     public void onEnable() {
         super.onEnable();
 
-        // First setup the configuration file and ensure that that's working
-        if(!setupConfiguration()){
-            getLogger().log(Level.SEVERE, "Please modify config.yml properly to use this plugin.");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
-        }
+        logger = getLogger();
 
-        // Then check and make sure the database works properly
-        Connection c = DBInterface.getConnection(config, getDataFolder());
+        // Check and make sure the database works properly
+        Connection c = DBInterface.getConnection(getDataFolder());
 
         if(c == null){
             getLogger().log(Level.SEVERE, "There was an issue connecting to the database. Please make sure " +
@@ -47,8 +41,6 @@ public class Main extends JavaPlugin {
 
         getLogger().info("Database connected!");
         this.getCommand("note").setExecutor(new NoteCommand());
-
-        logger = getLogger();
     }
 
     @Override
@@ -66,48 +58,5 @@ public class Main extends JavaPlugin {
      */
     public static void log(Level lvl, String message){
         logger.log(lvl, message);
-    }
-
-    /**
-     * Attempts to setup the configuration file properly.
-     *
-     * @return true if it worked
-     */
-    private boolean setupConfiguration() {
-        if(!getDataFolder().exists()){
-            getLogger().info("Data folder does not exist; creating...");
-            getDataFolder().mkdir();
-        }
-
-        File file = new File(getDataFolder(), "config.yml");
-
-        if(!file.exists()){
-            getLogger().log(Level.WARNING, "config.yml not found! Creating...");
-
-            FileConfiguration configuration = getConfig();
-            configuration.addDefault("username", "");
-            configuration.addDefault("password", "");
-            configuration.addDefault("host", "");
-            configuration.addDefault("schema", "");
-            saveDefaultConfig();
-
-            return false;
-        }
-
-        getLogger().info("config.yml found; attempting to pull up config...");
-        config = getConfig();
-        return verifyConfig(config);
-    }
-
-    /**
-     * Helper method. Returns true if the config file is properly configured.
-     *
-     * @param config - FileConfiguration to check
-     * @return true if the config file is managed properly
-     */
-    private boolean verifyConfig(FileConfiguration config) {
-        return config.getString("username") != null && config.getString("password") != null
-                && config.getString("host") != null && config.getString("schema") != null
-                && config.getString("engine") != null;
     }
 }

@@ -6,4 +6,4 @@
  commands:
    note:
      description: Save a quick note
-     usage: /note <delete [id]|list|create [note to save]|read [id]>
+     usage: /note <delete [id] | list | create [note] | read [id]>

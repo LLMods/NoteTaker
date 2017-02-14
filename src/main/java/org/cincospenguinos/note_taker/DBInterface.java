@@ -9,6 +9,8 @@ import java.util.logging.Level;
 
 /**
  * Interface for the database.
+ *
+ * TODO: DB Upgrades?
  */
 public class DBInterface {
 
@@ -18,55 +20,23 @@ public class DBInterface {
     // Connection to the DB
     private static Connection connection;
 
-    // What type of DB engine we are using
-    private static DatabaseEngine databaseEngine;
-
-    /**
-     * Helps to figure out what DB engine the user wants to use
-     */
-    private enum DatabaseEngine {
-        MYSQL, SQLITE, POSTGRES, INVALID
-    }
-
     /**
      * Returns a connection to the database, or null if an issue occurred.
      *
-     * @param configuration - File config to pass
      * @return Connection or null
      */
-    public static Connection getConnection(FileConfiguration configuration, File dataFolder){
+    public static Connection getConnection(File dataFolder){
         if (connection == null) {
-            DatabaseEngine type = getDatabaseType(configuration);
-
-            String username = configuration.getString("username");
-            String password = configuration.getString("password");
-            String engine = configuration.getString("engine");
-            String schema = configuration.getString("schema");
-            String host = configuration.getString("host");
-            String url = "jdbc:" + engine;
-
-            switch (type) {
-                case MYSQL:
-                case POSTGRES:
-                    url += "://" + host + "/" + schema;
-                    break;
-                case SQLITE:
-                    url += ":" + dataFolder.toString() + "/note_taker.db";
-                    break;
-                case INVALID:
-                    Main.log(Level.SEVERE, "Invalid database option (did you specify a database engine?)");
-                    return null;
-            }
+            String url = "jdbc:sqlite:" + dataFolder.toString() + "note_taker.db";
 
             try {
-                connection = DriverManager.getConnection(url, username, password);
+                connection = DriverManager.getConnection(url);
             } catch (SQLException e) {
                 Main.log(Level.SEVERE, "Cannot connect to database!");
                 e.printStackTrace();
                 return null;
             }
 
-            databaseEngine = type;
         }
         return connection;
     }
@@ -80,29 +50,10 @@ public class DBInterface {
         if(connection == null)
             return false;
 
-        String query = "";
-
-        switch (databaseEngine) {
-            case SQLITE:
-                query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "username VARCHAR(50) NOT NULL," +
-                        "note TEXT NOT NULL)";
-                break;
-            case MYSQL:
-                query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                        "id INT NOT NULL AUTO_INCREMENT," +
-                        "username VARCHAR(50) NOT NULL," +
-                        "note TEXT NOT NULL," +
-                        "PRIMARY KEY(id))";
-                break;
-            case POSTGRES:
-                query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                        "id SERIAL PRIMARY KEY," +
-                        "username VARCHAR(50) NOT NULL," +
-                        "note TEXT NOT NULL)";
-                break;
-        }
+        String query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "username VARCHAR(50) NOT NULL," +
+                "note TEXT NOT NULL)";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -127,18 +78,7 @@ public class DBInterface {
         if(connection == null)
             return false;
 
-        String sql = "";
-
-        switch(databaseEngine){
-            case SQLITE:
-                sql = "INSERT INTO " + TABLE_NAME + "(username, note) VALUES (?, ?)";
-                break;
-            case MYSQL:
-                sql = "INSERT INTO " + TABLE_NAME + " VALUES (?, ?)";
-                break;
-            case POSTGRES:
-                break;
-        }
+        String sql = "INSERT INTO " + TABLE_NAME + "(username, note) VALUES (?, ?)";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(sql);
@@ -263,28 +203,5 @@ public class DBInterface {
             Main.log(Level.SEVERE, "An exception was thrown when attempting to disconnect from the DB!");
             e.printStackTrace();
         }
-    }
-
-    /*
-     * HELPERS
-     */
-
-    /**
-     * Extracts the database engine from the config file provided
-     *
-     * @param configuration - FileConfiguration of the plugin
-     * @return Which DatabaseEngine to use, or INVALID if the one provided is not supported
-     */
-    private static DatabaseEngine getDatabaseType(FileConfiguration configuration){
-        String type = configuration.getString("engine");
-
-        if(type.equalsIgnoreCase("mysql"))
-            return DatabaseEngine.MYSQL;
-        else if(type.equalsIgnoreCase("postgres") || type.equalsIgnoreCase("postgresql"))
-            return DatabaseEngine.POSTGRES;
-        else if(type.equalsIgnoreCase("sqlite"))
-            return DatabaseEngine.SQLITE;
-
-        return DatabaseEngine.INVALID;
     }
 }
